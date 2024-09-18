@@ -1,0 +1,16 @@
+[package]
+name = "tr-trimmer"
+authors = ["Antonio Camargo"]
+version = "0.1.0"
+edition = "2021"
+description = "Trim terminal repeats from sequences in FASTA files"
+readme = "README.md"
+homepage = "https://github.com/apcamargo/seq-hasher"
+repository = "https://github.com/apcamargo/seq-hasher"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.5.17", features = ["wrap_help"] }
+clio = { version = "0.3.5", features = ["clap-parse"] }
+needletail = "0.5.1"
+textwrap = "0.16.1"
