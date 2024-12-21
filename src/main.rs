@@ -31,14 +31,13 @@ fn fraction_in_range(s: &str) -> Result<f64, String> {
 #[command(version, about, max_term_width = 79)]
 struct Cli {
     /// Input file(s). Use '-' for stdin
-    #[clap(value_parser, default_value = "-")]
+    #[clap(default_value = "-")]
     input: Vec<Input>,
 
     /// Identify inverted terminal repeats (ITRs) from sequences
     #[clap(
         short = 'i',
         long,
-        value_parser,
         default_value = "false",
         help_heading = "Terminal repeat identification"
     )]
@@ -49,7 +48,6 @@ struct Cli {
     #[clap(
         short = 'd',
         long,
-        value_parser,
         requires = "enable_itr_identification",
         default_value = "false",
         help_heading = "Terminal repeat identification"
@@ -60,7 +58,6 @@ struct Cli {
     #[clap(
         short = 'l',
         long,
-        value_parser,
         default_value = "21",
         help_heading = "Terminal repeat identification"
     )]
@@ -71,7 +68,6 @@ struct Cli {
     #[clap(
         long,
         short = 'c',
-        value_parser,
         default_value = "false",
         help_heading = "Terminal repeat filtering"
     )]
@@ -93,7 +89,6 @@ struct Cli {
     #[clap(
         long,
         short = 'n',
-        value_parser,
         default_value = "false",
         help_heading = "Terminal repeat filtering"
     )]
@@ -111,36 +106,18 @@ struct Cli {
     max_ambiguous_frac: f64,
 
     /// Retain only the sequences for which terminal repeats were identified
-    #[clap(
-        short = 'x',
-        long,
-        value_parser,
-        default_value = "false",
-        help_heading = "Output"
-    )]
+    #[clap(short = 'x', long, default_value = "false", help_heading = "Output")]
     exclude_non_tr_seqs: bool,
 
     /// Add terminal repeat information to the sequence headers (e.g.,
     /// 'tr=dtr tr_length=55')
-    #[clap(
-        short = 'a',
-        long,
-        value_parser,
-        default_value = "false",
-        help_heading = "Output"
-    )]
+    #[clap(short = 'a', long, default_value = "false", help_heading = "Output")]
     include_tr_info: bool,
 
     /// Disable trimming of terminal repeats from sequences. Can be used with
     /// `--include-tr-info` or `--exclude-non-tr-seqs` to identify and report
     /// sequences with terminal repeats without modifying the sequences
-    #[clap(
-        short = 't',
-        long,
-        value_parser,
-        default_value = "false",
-        help_heading = "Output"
-    )]
+    #[clap(short = 't', long, default_value = "false", help_heading = "Output")]
     disable_trimming: bool,
 }
 
