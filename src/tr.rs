@@ -57,7 +57,14 @@ impl<'a> TerminalRepeatFinder<'a> {
     /// the fraction of the TR length that is low-complexity exceeds the maximum
     /// allowed fraction (`max_lc_frac`).
     fn is_valid_complexity(&self, tr_length: usize) -> bool {
-        let mask = dustmasker(&self.sequence, 32, 30);
+        // If the sequence is longer than 50 * tr_length, dustmasker will
+        // process the first 50 * tr_length bases. Otherwise, it will process
+        // the entire sequence.
+        let mask = if self.sequence.len() > 50 * tr_length {
+            dustmasker(&self.sequence[..50 * tr_length], 32, 30)
+        } else {
+            dustmasker(&self.sequence, 32, 30)
+        };
         let n_lc_tr: usize = mask
             .iter()
             .take_while(|range| range.start < tr_length)
