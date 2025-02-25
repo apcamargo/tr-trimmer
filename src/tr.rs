@@ -87,19 +87,21 @@ pub fn find_repeats(
     }
     if enable_itr_identification {
         let (has_itr, tr_length) = find_itr(sequence, min_length);
-        if ignore_low_complexity {
-            match evaluate_tr_complexity(sequence, tr_length, max_low_complexity_frac) {
-                true => return (false, has_itr, tr_length),
-                false => return (false, false, tr_length),
+        if has_itr {
+            if ignore_low_complexity {
+                match evaluate_tr_complexity(sequence, tr_length, max_low_complexity_frac) {
+                    true => return (false, has_itr, tr_length),
+                    false => return (false, false, tr_length),
+                }
             }
-        }
-        if ignore_ambiguous {
-            match evaluate_ambiguous_bases(sequence, tr_length, max_ambiguous_frac) {
-                true => return (false, has_itr, tr_length),
-                false => return (false, false, tr_length),
+            if ignore_ambiguous {
+                match evaluate_ambiguous_bases(sequence, tr_length, max_ambiguous_frac) {
+                    true => return (false, has_itr, tr_length),
+                    false => return (false, false, tr_length),
+                }
             }
+            return (false, has_itr, tr_length);
         }
-        return (false, has_itr, tr_length);
     }
     (false, false, 0)
 }
