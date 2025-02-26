@@ -36,7 +36,7 @@ tr-trimmer [OPTIONS] [INPUT]...
 | `-c`, `--ignore-low-complexity` | Ignore terminal repeats with a high proportion of low-complexity sequences. |
 | `--max-low-complexity-frac <MAX_LOW_COMPLEXITY_FRAC>` | Maximum fraction of the terminal repeat length comprised of low-complexity sequences. Default: `0.5`. |
 | `-n`, `--ignore-ambiguous` | Ignore terminal repeats with a high proportion of ambiguous bases (e.g., `N`). |
-| `--max-ambiguous-frac <MAX_AMBIGUOUS_FRAC>` | Maximum fraction of the terminal repeat length comprised of ambiguous bases. Default: `0.5`. |
+| `--max-ambiguous-frac <MAX_AMBIGUOUS_FRAC>` | Maximum fraction of the terminal repeat length comprised of ambiguous bases. Default: `0.0`. |
 
 ### Output
 
