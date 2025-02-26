@@ -107,7 +107,7 @@ struct Cli {
     #[clap(
         long,
         value_parser = fraction_in_range,
-        default_value = "0.5",
+        default_value = "0.0",
         requires = "ignore_ambiguous",
         help_heading = "Terminal repeat filtering"
     )]
