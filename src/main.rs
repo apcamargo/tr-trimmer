@@ -1,17 +1,25 @@
 mod sdust;
 mod tr;
-use std::io::{self, Write};
 
 use crate::tr::find_repeats;
-use clap::Parser;
+use clap::{
+    builder::styling::{AnsiColor, Style, Styles},
+    Parser,
+};
 use clio::Input;
-use needletail::parser::SequenceRecord;
-use needletail::{parse_fastx_file, parse_fastx_stdin};
+use needletail::{parse_fastx_file, parse_fastx_stdin, parser::SequenceRecord};
+use std::io::{self, Write};
 use std::ops::RangeInclusive;
 use std::process;
 use std::str::{from_utf8, Utf8Error};
 
 const FRACTION_RANGE: RangeInclusive<f64> = 0.0..=1.0;
+
+const STYLES: Styles = Styles::styled()
+    .header(AnsiColor::Cyan.on_default().bold())
+    .usage(AnsiColor::Yellow.on_default().bold())
+    .literal(AnsiColor::Yellow.on_default().bold())
+    .placeholder(Style::new().dimmed());
 
 fn fraction_in_range(s: &str) -> Result<f64, String> {
     let f: f64 = s.parse().map_err(|_| format!("`{s}` isn't a fraction"))?;
@@ -28,7 +36,7 @@ fn fraction_in_range(s: &str) -> Result<f64, String> {
 
 /// Trim terminal repeats from sequences in FASTA files
 #[derive(Parser)]
-#[command(version, about, max_term_width = 79)]
+#[command(version, about, max_term_width = 79, styles = STYLES)]
 struct Cli {
     /// Input file(s). Use '-' for stdin
     #[clap(default_value = "-")]
