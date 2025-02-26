@@ -2,7 +2,7 @@
 name = "tr-trimmer"
 authors = ["Antonio Camargo"]
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 description = "Trim terminal repeats from sequences in FASTA files"
 readme = "README.md"
 homepage = "https://github.com/apcamargo/seq-hasher"
