@@ -3,15 +3,19 @@ mod tr;
 
 use crate::tr::find_repeats;
 use clap::{
+    CommandFactory, Parser,
     builder::styling::{AnsiColor, Style, Styles},
-    Parser,
 };
+
 use clio::Input;
-use needletail::{parse_fastx_file, parse_fastx_stdin, parser::SequenceRecord};
-use std::io::{self, Write};
+use needletail::{
+    parse_fastx_file, parse_fastx_stdin,
+    parser::{FastxReader, SequenceRecord},
+};
+use std::io::{self, IsTerminal, Write};
 use std::ops::RangeInclusive;
 use std::process;
-use std::str::{from_utf8, Utf8Error};
+use std::str::{Utf8Error, from_utf8};
 
 const FRACTION_RANGE: RangeInclusive<f64> = 0.0..=1.0;
 
@@ -129,6 +133,23 @@ struct Cli {
     disable_trimming: bool,
 }
 
+fn create_fasta_reader(input: &Input) -> Result<Box<dyn FastxReader>, String> {
+    let reader_result = match input.is_std() {
+        true => parse_fastx_stdin(),
+        false => {
+            if input.is_empty().unwrap() {
+                return Err("the input file is empty".to_string());
+            }
+            parse_fastx_file(input.path().to_path_buf())
+        }
+    };
+
+    match reader_result {
+        Ok(reader) => Ok(reader),
+        Err(e) => Err(format!("{}", e)),
+    }
+}
+
 fn format_record(
     record: &SequenceRecord<'_>,
     sequence: &[u8],
@@ -169,7 +190,7 @@ fn write_record_to_stdout(record: String) {
 }
 
 fn pipeline(
-    input: Input,
+    mut reader: Box<dyn FastxReader>,
     enable_itr_identification: bool,
     disable_dtr_trimming: bool,
     min_length: usize,
@@ -181,25 +202,6 @@ fn pipeline(
     include_tr_info: bool,
     disable_trimming: bool,
 ) {
-    let reader = match input.is_std() {
-        true => parse_fastx_stdin(),
-        false => {
-            if input.is_empty().unwrap() {
-                eprintln!("Error: the input file is empty");
-                process::exit(1);
-            }
-            parse_fastx_file(input.path().to_path_buf())
-        }
-    };
-
-    let mut reader = match reader {
-        Ok(reader) => reader,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            process::exit(1);
-        }
-    };
-
     while let Some(record) = reader.next() {
         let record = match record {
             Ok(record) => record,
@@ -241,29 +243,51 @@ fn pipeline(
 
 fn main() {
     let cli = Cli::parse();
-    let enable_itr_identification = cli.enable_itr_identification;
-    let disable_dtr_trimming = cli.disable_dtr_trimming;
-    let min_length = cli.min_length;
-    let ignore_low_complexity = cli.ignore_low_complexity;
-    let max_low_complexity_frac = cli.max_low_complexity_frac;
-    let ignore_ambiguous = cli.ignore_ambiguous;
-    let max_ambiguous_frac = cli.max_ambiguous_frac;
-    let exclude_non_tr_seqs = cli.exclude_non_tr_seqs;
-    let include_tr_info = cli.include_tr_info;
-    let disable_trimming = cli.disable_trimming;
-    for input in cli.input {
+
+    // If it's an interactive session with no data piped to stdin and files provided,
+    // show help and exit
+    if cli.input.len() == 1 && cli.input[0].is_std() && io::stdin().is_terminal() {
+        Cli::command().print_help().unwrap();
+        process::exit(0);
+    }
+
+    for input in &cli.input {
+        let reader = match create_fasta_reader(input) {
+            Ok(reader) => reader,
+            Err(error_msg) => {
+                println!("Warning: {}", error_msg);
+                if input.is_std() {
+                    println!("Warning: failed to create reader for stdin: {}", error_msg);
+                    // If stdin is invalid and it's the only input, show help and exit
+                    if cli.input.len() == 1 {
+                        Cli::command().print_help().unwrap();
+                        process::exit(0);
+                    }
+                    // If stdin is invalid but there are other inputs, skip it
+                    println!("Warning: skipping stdin: {}", error_msg);
+                    continue;
+                }
+                // If the error is from a file input, report and exit
+                eprintln!(
+                    "Error: failed to create reader for {}: {}",
+                    input, error_msg
+                );
+                process::exit(1);
+            }
+        };
+
         pipeline(
-            input,
-            enable_itr_identification,
-            disable_dtr_trimming,
-            min_length,
-            ignore_low_complexity,
-            max_low_complexity_frac,
-            ignore_ambiguous,
-            max_ambiguous_frac,
-            exclude_non_tr_seqs,
-            include_tr_info,
-            disable_trimming,
+            reader,
+            cli.enable_itr_identification,
+            cli.disable_dtr_trimming,
+            cli.min_length,
+            cli.ignore_low_complexity,
+            cli.max_low_complexity_frac,
+            cli.ignore_ambiguous,
+            cli.max_ambiguous_frac,
+            cli.exclude_non_tr_seqs,
+            cli.include_tr_info,
+            cli.disable_trimming,
         );
     }
 }
