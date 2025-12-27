@@ -255,16 +255,13 @@ fn main() {
         let reader = match create_fasta_reader(input) {
             Ok(reader) => reader,
             Err(error_msg) => {
-                println!("Warning: {}", error_msg);
                 if input.is_std() {
-                    println!("Warning: failed to create reader for stdin: {}", error_msg);
                     // If stdin is invalid and it's the only input, show help and exit
                     if cli.input.len() == 1 {
                         Cli::command().print_help().unwrap();
                         process::exit(0);
                     }
                     // If stdin is invalid but there are other inputs, skip it
-                    println!("Warning: skipping stdin: {}", error_msg);
                     continue;
                 }
                 // If the error is from a file input, report and exit
