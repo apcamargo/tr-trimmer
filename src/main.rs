@@ -9,7 +9,7 @@ use clap::{
 
 use clio::Input;
 use needletail::{
-    parse_fastx_file, parse_fastx_stdin,
+    parse_fastx_reader,
     parser::{FastxReader, SequenceRecord},
 };
 use std::io::{self, IsTerminal, Write};
@@ -133,21 +133,11 @@ struct Cli {
     disable_trimming: bool,
 }
 
-fn create_fasta_reader(input: &Input) -> Result<Box<dyn FastxReader>, String> {
-    let reader_result = match input.is_std() {
-        true => parse_fastx_stdin(),
-        false => {
-            if input.is_empty().unwrap() {
-                return Err("the input file is empty".to_string());
-            }
-            parse_fastx_file(input.path().to_path_buf())
-        }
-    };
-
-    match reader_result {
-        Ok(reader) => Ok(reader),
-        Err(e) => Err(format!("{}", e)),
+fn create_fasta_reader(input: Input) -> Result<Box<dyn FastxReader>, String> {
+    if input.can_seek() && input.is_empty() == Some(true) {
+        return Err("the input file is empty".to_string());
     }
+    parse_fastx_reader(input).map_err(|e| e.to_string())
 }
 
 fn format_record(
@@ -243,21 +233,25 @@ fn pipeline(
 
 fn main() {
     let cli = Cli::parse();
+    let input_count = cli.input.len();
 
     // If it's an interactive session with no data piped to stdin and files provided,
     // show help and exit
-    if cli.input.len() == 1 && cli.input[0].is_std() && io::stdin().is_terminal() {
+    if input_count == 1 && cli.input[0].is_std() && io::stdin().is_terminal() {
         Cli::command().print_help().unwrap();
         process::exit(0);
     }
 
-    for input in &cli.input {
+    for input in cli.input {
+        let is_std = input.is_std();
+        let input_display = input.to_string();
+
         let reader = match create_fasta_reader(input) {
             Ok(reader) => reader,
             Err(error_msg) => {
-                if input.is_std() {
+                if is_std {
                     // If stdin is invalid and it's the only input, show help and exit
-                    if cli.input.len() == 1 {
+                    if input_count == 1 {
                         Cli::command().print_help().unwrap();
                         process::exit(0);
                     }
@@ -267,7 +261,7 @@ fn main() {
                 // If the error is from a file input, report and exit
                 eprintln!(
                     "Error: failed to create reader for {}: {}",
-                    input, error_msg
+                    input_display, error_msg
                 );
                 process::exit(1);
             }
