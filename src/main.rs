@@ -56,7 +56,7 @@ struct Cli {
     enable_itr_identification: bool,
 
     /// Disable identification of direct terminal repeats (DTRs) from sequences
-    /// (requires --enable-itr-trimming)
+    /// (requires --enable-itr-identification)
     #[clap(
         short = 'd',
         long,
